@@ -2509,6 +2509,11 @@
       return geometry ? `<g class="mr-node mr-trigger-zone" data-node="${esc(node.id)}" data-kind="trigger" role="button" tabindex="0" aria-label="${title}"><title>${title}</title>${geometry}</g>` : "";
     }).join("");
 
+    const musicZoneSvg = window.WebUI?.mapMusic?.overlaySvg((position, levelId) => {
+      const background = bgRects.find((row) => row.bg.levelId === levelId)?.bg
+        || modelRects.find((row) => row.bg.levelId === levelId)?.bg;
+      return plot(oriented(position, background));
+    }) || "";
     const nodeSvg = state.nodes.map((node) => {
       const quest = node.type === "quest";
       // A node reads as a story node when dialog is actually pinned to it, not
@@ -2639,7 +2644,7 @@
       <span class="mr-tool-sep" aria-hidden="true"></span>` : "";
 
     host.innerHTML = `<div class="mr-map" tabindex="0" role="group" aria-label="${esc(`${mapTitle(data)} - ${t("mapSurface")}`)}">
-        <svg class="mr-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="group" aria-label="${esc(mapTitle(data))}"><rect width="100%" height="100%" class="mr-map-bg"/><g class="mr-viewport">${backgroundImages}<g class="mr-location-labels">${locationLabelSvg}</g><g class="mr-routes">${routeSvg}</g><g class="mr-trigger-zones">${triggerZoneSvg}</g><g class="mr-nodes">${nodeSvg}</g><g class="mr-encounter-overlay"></g></g></svg>
+        <svg class="mr-canvas" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="group" aria-label="${esc(mapTitle(data))}"><rect width="100%" height="100%" class="mr-map-bg"/><g class="mr-viewport">${backgroundImages}<g class="mr-location-labels">${locationLabelSvg}</g><g class="mr-routes">${routeSvg}</g><g class="mr-trigger-zones">${triggerZoneSvg}</g>${musicZoneSvg}<g class="mr-nodes">${nodeSvg}</g><g class="mr-encounter-overlay"></g></g></svg>
         <div class="mr-tip" hidden></div>
         <div class="mr-floor-tip" hidden></div>
         <div class="mr-coordinate-tip" hidden aria-hidden="true"></div>
@@ -2686,6 +2691,7 @@
             </section>
           </div>
           ${window.WebUI?.mapEncounters?.markup() || ""}
+          ${window.WebUI?.mapMusic?.markup() || ""}
           <div class="mr-technical-evidence">
           <h2>${esc(t("evidence"))}</h2>
            <p class="mr-note"><b>${state.backgrounds.length}</b> ${esc(surfaceLabel)}</p>
@@ -2740,6 +2746,7 @@
       item?.focus({ preventScroll: true });
     });
     window.WebUI?.mapEncounters?.mount(host, selectEncounter);
+    window.WebUI?.mapMusic?.mount(host, { onRefresh: render });
     state.inspectorKey = "";
     renderInspector();
     applyTransform();
@@ -3394,6 +3401,7 @@
     await window.WebUI.nextPaint();
     if (request !== state.mapLoadRequest) return false;
     await window.WebUI?.mapEncounters?.load(members.map((member) => member.id));
+    await window.WebUI?.mapMusic?.load(members.map((member) => member.id));
     if (request !== state.mapLoadRequest) return false;
     // A few regions at most should stay resident; the rest are re-fetchable.
     if (state.payloads.size > 40) {

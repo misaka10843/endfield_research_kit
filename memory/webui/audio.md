@@ -31,12 +31,62 @@ only its own. Without published Story, Audio builds and links no voice lines.
 ## Primary generated outputs
 
 - `webui/data/lang/<LANG>/audio/{index,events,media}.json` plus lazy semantic
-  shards and `scene_backgrounds.json`;
+  shards, `scene_backgrounds.json` and `scene_music.json`;
 - `webui/data/lang/<LANG>/gameplay/sound_effects.json` and the other Gameplay
   audio sidecars;
 - `webui/data/lang/<LANG>/audio/conv/<key>.json`, merged by the Story page;
 - decoded media under `game/Audio/shared/` (SFX/music) and
   `game/Audio/<LANG>/` (voice).
+
+`semantics/scene_music.py` projects scene BGM from already collected events,
+scene lifecycle definitions, AudioLevel rows and explicit AudioCue level
+handlers. Name similarity never owns a scene. Global Cue rules remain
+unassigned unless another exact scene request exists. Media are possible
+Wwise leaves, conditions are not evaluated, and fade/delay/synchronization
+fields do not establish actual audible silence. A scene request alone has no
+spatial coverage; separate admitted `regions` carry authored trigger geometry.
+Map consumes this Audio-owned projection without writing Audio data.
+Many scene music requests are State/Switch setters rather than Play actions.
+An exact scene-to-control join therefore does not assign the shared music
+engine's possible leaves to that scene. Preserve the control group/value
+evidence and leave the scene-to-track branch unresolved until its selector
+join is proved; missing media on such an event is not a decode failure.
+The focused `--scene-music-only` refresh covers table scene requests and
+explicit Cue levels only, and marks that subset instead of reusing a possibly
+stale published Unity scene catalog.
+
+`semantics/music_routes.py` now supplies a separate conditional State-to-track
+projection from the existing typed v150 MusicSwitch trees. It requires a
+nonzero explicit match to the request's State assignment, a compatible complete
+predicate path, individually proved leaf ownership and a same-bank typed
+track source. Conflicting setters are withheld rather than resolved by input
+order. Unknown/default predicates remain visible; a zero key is not interpreted
+as the runtime fallback for a known nonzero State. A tree's unproved sibling
+does not invalidate another leaf's own reciprocal ownership proof, but the gap
+remains in the audit. Candidates assume an active music engine and request
+execution; they do not establish live branch selection, mixing, audibility or
+region ownership. Audio Event details reuse the existing player renderer for
+these separate candidates. Native decoder/provider preparation gates remain
+unchanged: their build mismatch neither authorizes native claims nor prevents
+this independent serialized-bank projection.
+An Event whose requested State group is absent from the supplied music-engine
+projection reports `noMatchingMusicStateGroup`, with an incomplete audit and
+separate available/matching engine counts. No available typed engine reports
+`musicEngineProjectionUnavailable`. Neither empty result proves that no music
+plays, or that no other game-side control route exists.
+Scene BGM subregion recovery is static-only: read installed client bytes and
+existing exports. Do not use game patches, process injection or runtime hooks
+to fill the region/selection gap. DummyDll generation is offline schema
+recovery only and must pass its current-build identity gates before use.
+`scene_music_regions.py` now consumes the independently gated pooled
+LevelScript lane. It joins the script-owned constant trigger filter to its
+own volume, supported action paths and a named music request, retaining enter
+and leave directions, branch predicates, boolean assignments and script waits.
+Current record EOF, native reader/dispatch identity and logical VFS bytes are
+checked before publication. Named map labels are contained XZ anchors, not
+formal place boundaries. The State-to-track candidates remain conditional;
+neither an authored box nor a script wait establishes audible coverage or a
+silence gap. Native provider preparation is still a separate gated lane.
 
 Heavy direct-effect records, including anonymous native input reads, live in
 lazy media detail shards. Bus effect parameters remain in the shared unique
@@ -70,6 +120,9 @@ reference is required before its reads appear on an Event or media detail.
 - Story-line binding can close purpose investigation for a media record, but
   does not prove playback in a captured session.
 - Manual notes are user annotations and never upgrade confidence.
+- A missing/mismatched PlaySound union or changed reviewed layout leaves bounded
+  SkillData/BuffData action rows empty with `boundedPlaySoundActionAudit`; base
+  audio decoding continues without promoting those unavailable associations.
 - A decoded `soundEvent` member is a naming candidate even when it carries prose
   or outer whitespace; the page gains an Event name from it only on a selected
   HIRC Event-object hash match, and other authored references stay visible with

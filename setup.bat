@@ -110,8 +110,10 @@ if errorlevel 1 goto :failed
 
 echo.
 echo [setup 4/7] Building the AnimeStudio CLI...
+echo set sdks
 call .\scripts\game_data\extraction\animestudio\setup_dotnet9.bat
 if errorlevel 1 goto :failed
+echo building
 call .\scripts\game_data\extraction\animestudio\rebuild.bat -Target CLI
 if errorlevel 1 goto :failed
 if not exist "%ANIMESTUDIO_EXE%" (

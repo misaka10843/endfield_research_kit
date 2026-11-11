@@ -22,6 +22,14 @@ into `raw/` is `STRUCTURED_BLOCKS`/`RAW_BLOCKS` in
 [`scope.py`](../../scripts/game_data/extraction/scope.py). Sizes and counts
 live in the VFS audit report, not here.
 
+`EndfieldVfsLoader` accepts metadata code versions 1–5. Version 5 widens both
+the chunk and file tag slots from four to eight bytes; their values remain
+opaque (`MainTagValue` / `FileTagValue`) rather than being cast to the legacy
+`None`/`Audit` enum. Index JSON preserves them as hexadecimal strings to avoid
+JavaScript integer precision loss. CRC, group totals, range and exact metadata
+consumption checks still apply; accepting this outer layout does not establish
+the meaning of the new slots or compatibility of inner Unity payloads.
+
 | Block | Holds | Export | Reader; lane file |
 | --- | --- | --- | --- |
 | `Bundle`, `InitBundle` | Unity asset bundles | Unity objects (never dumped) | AnimeStudio; [`unity_assets.md`](unity_assets.md), [`containers_cabmap.md`](containers_cabmap.md) |

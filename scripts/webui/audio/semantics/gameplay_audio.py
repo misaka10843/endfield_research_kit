@@ -1509,8 +1509,11 @@ def collect_buff_play_sound_actions(
     self-derived envelope boundary is consumed exactly.  Unknown selector
     subtypes retain the bounded opaque fallback; neither representation claims
     that a runtime target or branch was actually selected.
+    An unavailable native union or changed reviewed layout suppresses only
+    these action rows, with a structured audit; base audio decoding can proceed.
     """
 
+    decode_audit: dict[str, Any] = {"status": "providedDecoder"}
     if decoder is None:
         from scripts.game_data.memorypack.buff import (
             BUFF_PLAY_SOUND_ACTION_TAG,
@@ -1522,11 +1525,38 @@ def collect_buff_play_sound_actions(
         play_sound_pair = levelscript_union_tags.pair(
             "AbilityActionData", "Core_PlaySoundAction_PlaySoundActionData"
         )
+        native_audit = levelscript_union_tags.union_tags_audit()
         if (
-            not isinstance(play_sound_pair[0], int)
+            native_audit.get("status") != "validated"
+            or len(play_sound_pair) != 2
+            or not isinstance(play_sound_pair[0], int)
             or play_sound_pair[0] != BUFF_PLAY_SOUND_ACTION_TAG
+            or play_sound_pair[1] != 22
         ):
-            raise ValueError("Buff PlaySound action union pair is unavailable for the selected build")
+            audit = {
+                "status": "unavailable",
+                "reason": "nativeUnionUnavailable" if native_audit.get("status") != "validated" else "reviewedLayoutChanged",
+                "validator": "levelscript_union_tags",
+                "source": str(levelscript_union_tags.DEFAULT_CONTRACT),
+                "family": "AbilityActionData",
+                "type": "Core_PlaySoundAction_PlaySoundActionData",
+                "nativeGate": native_audit,
+                "expectedPair": [BUFF_PLAY_SOUND_ACTION_TAG, 22],
+                "actualPair": list(play_sound_pair),
+                "sourceRecords": len(buff_records),
+            }
+            return {
+                "byBuffEvent": {},
+                "audit": audit,
+                "counts": {
+                    "buffPlaySoundDecodedSourceFiles": 0,
+                    "buffPlaySoundDecodeFailures": 0,
+                    "buffPlaySoundActionOccurrences": 0,
+                    "buffPlaySoundUniqueEvents": 0,
+                    "buffPlaySoundOuterWhitespaceEventLiterals": 0,
+                },
+            }
+        decode_audit = {"status": "validated", "nativeGate": native_audit, "pair": list(play_sound_pair)}
         member_count = play_sound_pair[1]
         signature = bytes([MEMORYPACK_UNION_WIDE_TAG]) + int(BUFF_PLAY_SOUND_ACTION_TAG).to_bytes(2, "little") + bytes([member_count])
 
@@ -1662,6 +1692,7 @@ def collect_buff_play_sound_actions(
     for row in merged.values():
         by_buff_event[str(row["buffId"])][str(row["eventId"]).lower()].append(row)
     return {
+        "audit": decode_audit,
         "byBuffEvent": {
             buff_id: {
                 event_id: sorted(
@@ -1737,6 +1768,20 @@ def collect_gameplay_audio_references(
         skill_play_sound_by_id,
     )
     buff_play_sound = collect_buff_play_sound_actions(export_root, buff_records)
+    play_sound_audits = {
+        "SkillData": skill_play_sound.get("audit") or {},
+        "BuffData": buff_play_sound.get("audit") or {},
+    }
+    for config_kind, audit in play_sound_audits.items():
+        if audit.get("status") == "unavailable":
+            native_gate = audit.get("nativeGate") or {}
+            print(
+                f"Audio {config_kind} PlaySound action rows unavailable: "
+                f"{audit.get('reason')}; native gate={native_gate.get('status')}; "
+                f"expected={audit.get('expectedPair')}, actual={audit.get('actualPair')}; "
+                f"{native_gate.get('detail', '')}. Audio decoding will continue.",
+                file=sys.stderr,
+            )
     buff_play_sound_by_id = buff_play_sound.get("byBuffEvent") or {}
     seeded_play_sound_events = seed_buff_play_sound_events(
         buff_records,
@@ -1947,6 +1992,7 @@ def collect_gameplay_audio_references(
     )
     return {
         "eventNames": event_names,
+        "boundedPlaySoundActionAudit": play_sound_audits,
         "owners": owners,
         "authoredPlaySoundActions": authored_play_sound_actions,
         "authoredConfigEventReferences": authored_config_event_references,
@@ -3225,6 +3271,7 @@ def link_gameplay_audio(
         "authoredPlaySoundActions": references.get("authoredPlaySoundActions") or [],
         "authoredSkillPlaySoundActions": references.get("authoredSkillPlaySoundActions") or [],
         "exactPlaySoundActionAudit": references.get("exactPlaySoundActionAudit") or {"status": "unavailable"},
+        "boundedPlaySoundActionAudit": references.get("boundedPlaySoundActionAudit") or {},
         "authoredConfigEventReferences": references.get("authoredConfigEventReferences") or [],
         "characters": characters,
         "enemies": enemies,

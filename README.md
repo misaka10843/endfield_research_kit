@@ -111,6 +111,7 @@ not named keep their previously generated data.
 | `.\export.bat story-media --from-game` | **Story**, **Text** | Story with its images and videos |
 | `.\export.bat story audio --from-game` | **Story**, **Text**, **Audio** | Text-only Story plus the Audio page, which also gives Story its voice lines |
 | `.\export.bat map --from-game` | **Map** | Extracts only Map's inputs |
+| `.\music-map.bat` | **Map + music atlas** | Validates the selected build, refreshes stale Table/JsonData only, and recovers supported music regions using decoded audio |
 | `.\export.bat debug --from-game` | Every page except **Updates** | Extracts every supported structured block and Unity class, then builds every page |
 | `.\export.bat --changed-only` | Every page, including **Updates** | Syncs installed data and media, then compares with the last successful sync |
 | `.\build_updates.bat OLD NEW` | **Updates** | Compares two complete export folders |
@@ -120,6 +121,11 @@ Page names for commands are `story`, `story-media`, `map`, `characters`,
 `gameplay` builds all of its catalogs. Plain `export.bat` extracts nothing:
 it rebuilds from the existing export and refuses stale or missing inputs,
 naming the pages to re-extract. Use `--from-game` to refresh client data.
+
+Audio also reads animation clips and animator controllers to recover sound
+triggers. A `map audio --from-game` run extracts both pages' dependencies from
+both installed layers before decoding audio; `--asset-jobs` limits extraction
+workers, not the amount of data selected.
 
 ### Shared data, serving, and packaging
 
@@ -142,6 +148,14 @@ decoded datasets on this page. Serve or package the current WebUI with:
 python serve.py
 python -m scripts.webui.package
 ```
+
+The independent [music atlas](http://127.0.0.1:8765/music.html) shows authored
+music-trigger regions and candidate playlists. Click a range to preview its
+music; `music-map.bat --music-site reports\music_site` also exports a separate
+static site with its map images and linked audio.
+The separate [song-mapping workbench](http://127.0.0.1:8765/music-bindings.html)
+edits local JSON drafts for review. Published provider mappings can replace
+local audio in a static export; see [the command guide](scripts/README.md).
 
 Packaging uses the generated data as it stands; it does not refresh it.
 

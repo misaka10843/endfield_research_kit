@@ -49,6 +49,59 @@ panel, layer, and inspector behavior in the header comment of
 `webui/src/features/map_recovery/index.js`. Generated audits and changing
 coverage live under `reports/assets/map_recovery/`.
 
+The Scene BGM panel reads Audio's last `lang/<LANG>/audio/scene_music.json`
+publication, matching exact scene IDs against the selected map members. It
+offers all-scene/unassigned searches, evidence export, Audio event links and
+one-at-a-time candidate media previews. This adds no cross-page build edge.
+Scene requests do not establish a spatial playback region; emitter positions
+alone do not justify a radius. Cue conditions and timing parameters remain
+stored evidence, with runtime selection and audible silence unresolved.
+`UILevelMapLoadConfig.staticElements` type-2 labels retain exact scene ownership,
+but are not audio subregions. Do not offer named-label music filters by merely
+copying parent-scene candidates. A scene ID such as `map02_lv010` covers the
+whole scene, not its named locations. A small-region music join needs its own
+proved trigger/configuration, identifier and State relation; neither nearby
+tasks nor a music name may promote a map label into that relation.
+Static Streaming audio-volume candidates now have a research path through
+`AudioSceneVolumeProxyEntityConvertFunc` and `AudioMapStreamingPersistentData`.
+Keep that lane separate from published BGM regions: its trigger-group Events
+can describe environmental sound or controls unrelated to the music selectors.
+The sampled named-location neighborhood and the wider scene-art sweep have not
+closed a BGM-selector join. Candidate geometry alone does not fill that gap.
+The successful music-region lane instead reads pooled LevelScripts through
+`scene_music_regions.py`: a constant entering/leaving slot filter joins the
+same script's stored shapes and supported action path to `PostMusicEvent`.
+Map consumes the Audio-owned `regions` publication and draws nominal XZ
+polygons. Selecting a range filters to its own entering or leaving requests;
+overlapping triggers retain their stored graph-state keys. Map-label anchor
+containment supplies vicinity names, without claiming formal place boundaries.
+The player previews conditional Wwise leaves for those requests. Script waits,
+vertical shape policy and branch evidence stay visible; audible range and
+silence remain unobserved. Refreshing the Audio catalog also redraws ranges.
+
+The independent `music.html` atlas reuses this publication and player, with
+clickable candidate lists, explicit click-to-preview, and no automatic playback
+from URL restoration. It loads only Map geography and Audio music data. The
+`--music-map-only` workflow validates sources and may refresh stale Table and
+JsonData inputs, never Unity classes or decoded audio. Portable exports retain
+the same conditional/static boundaries and rewrite preview paths locally;
+they need only a static HTTP server. Current coverage is generated in
+`reports/audio/music_map_build.json`, including unsupported script families.
+
+The atlas groups actual world levels under Valley IV/Wuling and hides special
+scenes by default. Shape draw order is computed per polygon, largest first,
+rather than per region: a mixed large/small region must not block other small
+areas. Highlighting does not change this order. Fresh localized names use
+LevelDescTable/I18n integer keys; old replacement-character labels are not
+authoritative display names.
+
+Manual recording/provider metadata is a separate curated layer. The standalone
+editor stores drafts locally and exports proposals; only reviewed JSON reaches
+the static map. Event-level song associations do not identify individual Wwise
+leaves. Size-reducing exports omit a local file only under an explicit file
+binding, or under the caller's explicit no-local-audio mode. Trigger evidence
+and remaining selector uncertainty survive either publication mode.
+
 ## Evidence boundary
 
 - Coordinates and matrices prove placement, not activation, visibility,
@@ -75,6 +128,9 @@ coverage live under `reports/assets/map_recovery/`.
   closed. Presentation fallbacks must not be labeled exact game rendering.
 - A streaming sidecar failure stops the canonical map phase instead of silently
   substituting sparse points.
+  A published set with no verified LevelConfig streaming-scene paths and no
+  existing sidecars skips that optional stage explicitly; existing unverified
+  placements still block publication rather than being reused.
 
 ### Interactive devices and facility names
 

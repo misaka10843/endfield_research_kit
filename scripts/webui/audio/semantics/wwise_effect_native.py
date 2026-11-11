@@ -65,18 +65,33 @@ from scripts.webui.audio.semantics.wwise_effect_updates import (
 
 
 CONTRACT_PATH = CONTRACTS_DIR / "wwise_effect_parameters_native.json"
+CONTRACT_SCHEMA = "endfield.wwise-effect-parameters-native.v4"
+
+
+class EffectParameterContractError(ValueError):
+    """Unsupported optional evidence never authorizes typed effect fields."""
+
+    def __init__(self, detail: str, actual: Any = None):
+        self.diagnostic = {
+            "validator": "wwise_effect_parameters_native", "source": str(CONTRACT_PATH),
+            "failedCheck": "contractSchema", "expected": CONTRACT_SCHEMA, "actual": actual,
+        }
+        super().__init__(f"{CONTRACT_PATH}: {detail}; expected {CONTRACT_SCHEMA}, actual {actual}")
 
 
 @lru_cache(maxsize=1)
 def load_effect_parameter_contract() -> dict[str, Any]:
     contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
-    if contract.get("schema") != "endfield.wwise-effect-parameters-native.v4":
-        raise ValueError("unsupported Wwise effect parameter contract")
+    if not isinstance(contract, dict) or contract.get("schema") != CONTRACT_SCHEMA:
+        raise EffectParameterContractError("unsupported Wwise effect parameter contract", contract.get("schema") if isinstance(contract, dict) else type(contract).__name__)
     return contract
 
 
 def effect_parameter_schema(plugin_class_id: int) -> dict[str, Any] | None:
-    contract = load_effect_parameter_contract()
+    try:
+        contract = load_effect_parameter_contract()
+    except EffectParameterContractError:
+        return None
     if contract.get("status") != "reviewedCurrentBuild":
         return None
     row = contract["parameterSchemas"].get(f"0x{plugin_class_id:08x}")
@@ -85,7 +100,10 @@ def effect_parameter_schema(plugin_class_id: int) -> dict[str, Any] | None:
 
 def effect_parameter_structural_schema(plugin_class_id: int) -> dict[str, Any] | None:
     """Return a reviewed read span without promoting anonymous bytes to settings."""
-    contract = load_effect_parameter_contract()
+    try:
+        contract = load_effect_parameter_contract()
+    except EffectParameterContractError:
+        return None
     if contract.get("status") != "reviewedCurrentBuild":
         return None
     row = contract.get("structuralSchemas", {}).get(f"0x{plugin_class_id:08x}")
@@ -311,7 +329,15 @@ def _validate_registration_witness(
 
 def check_effect_parameter_native_inputs(game_root: Path) -> dict[str, Any]:
     """Validate the selected native triplet, method bodies, and registration joins."""
-    contract = load_effect_parameter_contract()
+    try:
+        contract = load_effect_parameter_contract()
+    except EffectParameterContractError as exc:
+        return {
+            "status": "validation_failed", "detail": str(exc),
+            "selectedGameRoot": str(game_root), "diagnostic": exc.diagnostic,
+            "validatedClassIds": [], "validatedStructuralClassIds": [],
+            "validatedUpdateClassIds": [], "parameterUpdates": {},
+        }
     expected = contract["nativeInputs"]
     selected = Path(game_root)
     native = check_installed_native_inputs(

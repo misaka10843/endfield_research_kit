@@ -80,6 +80,7 @@ from scripts.webui.audio.semantics import (
     rtpc_alignment,
     runtime_observations,
     scene_backgrounds,
+    scene_music,
     source_provider,
     source_owner_capture,
     table_contexts,
@@ -982,6 +983,7 @@ def build_audio_semantic_data(
     native_entry_decode_witness: Path | None = None,
 ) -> dict[str, Any]:
     language = language.upper()
+    print("Audio semantics: validating native inputs and preparing runtime model", flush=True)
     published_package_catalog = package_catalog.rebuild_published(
         webui_root / 'data' / 'lang' / language / 'audio' / 'index.json',
         language=language, index_schema=AUDIO_SEMANTIC_SCHEMA_VERSION,
@@ -1035,6 +1037,7 @@ def build_audio_semantic_data(
         if isinstance(row, dict) and isinstance(row.get("eventHash"), int)
     }
     try:
+        print("Audio semantics: collecting scene backgrounds and AudioLevel requests", flush=True)
         scene_background_semantics = scene_backgrounds.collect_scene_background_semantics(
             export_root,
             audio_index,
@@ -1056,6 +1059,7 @@ def build_audio_semantic_data(
                 f"AnimeStudio object-index gate failed: {exc}"
             ),
         }
+    print("Audio semantics: collecting authored component and AudioCue contexts", flush=True)
     metadata_event_symbol_catalog = collect_metadata_event_symbol_aliases(
         metadata_path,
         current_wwise_event_hashes,
@@ -1118,6 +1122,7 @@ def build_audio_semantic_data(
             rtpc_names_by_hex[parameter_hex] = parameter_name
     for parameter_hex in rtpc_name_collisions:
         rtpc_names_by_hex.pop(parameter_hex, None)
+    print("Audio semantics: collecting LevelScript and timeline contexts", flush=True)
     levelscript_semantics = collect_levelscript_audio_semantics(
         export_root,
         cue_semantics=cue_semantics,
@@ -1665,6 +1670,7 @@ def build_audio_semantic_data(
             wwise_source_event_counts[source_kind] += 1
 
     out_root = webui_root / f"data/lang/{language}/audio"
+    print(f"Audio semantics: publishing {len(events)} Events and scene music catalog", flush=True)
     json_dump(out_root / "record_media.json", record_media.build_record_media(events))
     events_name = "events.json"
     media_details: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -1725,6 +1731,15 @@ def build_audio_semantic_data(
         for key, value in scene_background_semantics.items()
         if key != "eventContexts"
     })
+    scene_music_name = "scene_music.json"
+    from scripts.webui.audio.semantics.scene_music_regions import collect_regions
+    music_events, music_regions, music_region_audit = collect_regions(export_root=export_root,
+        metadata=metadata_path, gameassembly=gameassembly_path, language=language, events=events)
+    from scripts.webui.audio.semantics.music_bindings import enrich_catalog
+    json_dump(out_root / scene_music_name, enrich_catalog(scene_music.build_scene_music_catalog(
+        scene_background_semantics, music_events, cue_semantics, language,
+        regions=music_regions, region_audit=music_region_audit,
+    ), export_root=export_root, webui_root=webui_root))
     scene_global_exact_events = [
         event for event in events
         if event.get("sceneGlobalContextStatus") == "exact"
@@ -1822,6 +1837,7 @@ def build_audio_semantic_data(
             "events": events_name,
             "media": media_names,
             "sceneBackgrounds": scene_background_name,
+            "sceneMusic": scene_music_name,
         },
         "triggerContexts": {
             "shard": trigger_context_name,

@@ -740,6 +740,18 @@ def main() -> int:
         *(published_streaming_scene_ids(args.published_maps_root) if args.all_published_map_scenes else []),
     ]))
     if not level_ids:
+        if args.all_published_map_scenes and any(args.published_maps_root.glob("*.json")):
+            if any(args.output_root.glob("*.json")):
+                parser.error(
+                    "no verified LevelConfig streaming-scene paths, but existing instance "
+                    f"sidecars remain at {args.output_root}; refusing to reuse unverified placements"
+                )
+            print(
+                "map streaming instances: skipped; published maps have no verified "
+                "LevelConfig streaming-scene paths. No instance placements were inferred; "
+                "base map data remains available."
+            )
+            return 0
         parser.error("provide --level at least once or use --all-published-map-scenes")
     for level_id in level_ids:
         if not LEVEL_RE.fullmatch(level_id):

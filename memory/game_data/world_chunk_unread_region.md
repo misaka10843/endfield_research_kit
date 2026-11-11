@@ -202,6 +202,45 @@ join from the framed tables to the region worked.
 measurement. The one that should not have happened was a positive result
 published without the control applied everywhere else.*
 
+## Offline audio-volume property investigation
+
+The managed `AudioSceneVolumeProxyEntityConvertFunc.ConvertFrom` provides a
+separate static research route through `AudioMapStreamingPersistentData` and
+the box, segment and prism runtime-data types. Its property identifiers name
+ID, type and byte data; these are property keys, not descriptor IDs. In
+particular, matching an audio component index to the unread descriptor with
+the same number would repeat the namespace shortcut refused above.
+
+The persistent-data constructor reads a signed count, parallel UInt32 shape
+IDs and Int32 trigger-group indices, then a signed function count and
+length-delimited `AudioTriggerVolumeFunctionData` records. Each function reads
+byte-length-prefixed UInt32 entering and leaving Event arrays, two
+length-prefixed ASCII voice-trigger keys and a final float `sqrMargin`.
+This is a native-reader hypothesis supported by a bounded offline sample;
+it still needs a reviewed selected-input contract and authenticated corpus
+gate before a production reader may publish named fields from raw Streaming.
+The existing anonymous framing owner remains
+[`streaming/framing.py`](../../scripts/game_data/streaming/framing.py).
+
+Init persistent data and Streaming shape data must be examined as different
+carriers. The sampled default-variant scene-art files contain environmental
+emitters as well as trigger geometry. Sampled trigger Events rejoin existing
+typed Wwise actions, but their State requests did not match the supplied
+music-selector groups. This neither proves the absence of BGM regions nor
+binds a scene-art root or a map-label coordinate to a named gameplay area.
+Non-default variants and other game-side control paths remain outside that
+sample. Generated sample inventories and native disassembly stay under
+`reports/issue8/`; they are research output, not a replacement native gate.
+The subsequent successful BGM subregion route uses pooled LevelScript strings
+and graph-owned trigger shapes, not these Streaming emitter candidates. Its
+reader, corpus admission and evidence boundary are recorded in
+[`serialization_memorypack.md`](serialization_memorypack.md#pooled-strings-in-current-levelscript-music-graphs).
+
+For the current BGM task, keep the investigation static-only. No game patch,
+process attachment or runtime hook is authorized to close the remaining
+region-to-control-to-music join. A map label, an emitter position, a filename
+layer number or a coincident descriptor index cannot substitute for it.
+
 ## Open
 
 - A checked mapping from a descriptor ID to a named component consumer, then

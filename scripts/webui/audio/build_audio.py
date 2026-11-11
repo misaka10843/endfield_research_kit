@@ -1950,7 +1950,7 @@ def collect_event_audio_index(
         return {}, []
 
     effect_native_gate = check_effect_parameter_native_inputs(args.game_root)
-    effect_contract = load_effect_parameter_contract()
+    effect_contract = load_effect_parameter_contract() if effect_native_gate["status"] == "validated" else {}
     if effect_native_gate["status"] != "validated":
         print(
             "Audio effect parameter native evidence skipped: "
@@ -2744,9 +2744,9 @@ def collect_event_audio_index(
                     for key in sorted(unique_plugin_media_dependencies)
                 ],
                 "effectParameterBinaryContract": {
-                    "schema": effect_contract["schema"],
-                    "reviewedClassIds": sorted(effect_contract["parameterSchemas"]),
-                    "unreviewedClassIds": effect_contract["unreviewedClassIds"],
+                    "schema": effect_contract.get("schema"),
+                    "reviewedClassIds": sorted(effect_contract.get("parameterSchemas") or {}),
+                    "unreviewedClassIds": effect_contract.get("unreviewedClassIds") or [],
                 },
                 "effectParameterNativeGate": effect_native_gate,
                 "effectPluginReferenceCounts": dict(
@@ -4693,6 +4693,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--semantics-only", action="store_true",
         help="Rebuild only Audio page semantics from the existing decoded Audio index.",
     )
+    mode.add_argument("--scene-music-only", action="store_true",
+                      help="Refresh only scene BGM from AudioLevel/AudioCue tables and the decoded index; no Unity scan or decode.")
+    mode.add_argument("--music-map-only", action="store_true",
+                      help="Validate current native/export/VFS inputs, recover all supported music regions and publish the independent music map; no decode or Unity scan.")
+    parser.add_argument("--music-site", type=Path, default=None,
+                        help="With --music-map-only, export a portable static directory including map images and linked audio.")
+    parser.add_argument("--music-site-media", choices=("all", "mapped", "none"), default="all",
+                        help="Site audio: all local files; omit explicitly provider-mapped files; or no local audio (unmapped tracks have no preview).")
+    parser.add_argument("--music-bindings-only", action="store_true",
+                        help="With --music-map-only, publish reviewed names/provider bindings from an existing music catalog without native scans or extraction.")
+    parser.add_argument("--no-refresh-music-inputs", action="store_true",
+                        help="With --music-map-only, stop on stale Table/JsonData inputs instead of refreshing only those two blocks.")
     mode.add_argument('--native-entry-only',action='store_true',
                       help='Refresh only the independent native-entry disclosure in an existing current Audio publication; requires an explicit game root and session.')
     mode.add_argument('--package-catalog-only', action='store_true',
@@ -4752,7 +4764,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Decoded audio root containing shared and per-language folders. Default: <export-root>/game/Audio.",
     )
     args = parser.parse_args(argv)
-    focused = args.semantics_only or args.native_entry_only or args.package_catalog_only or args.runtime_source_only
+    focused = args.semantics_only or args.scene_music_only or args.music_map_only or args.native_entry_only or args.package_catalog_only or args.runtime_source_only
+    if args.music_site and not args.music_map_only:
+        parser.error('--music-site requires --music-map-only')
+    if args.music_bindings_only and not args.music_map_only:
+        parser.error('--music-bindings-only requires --music-map-only')
+    if args.music_site_media != "all" and not args.music_site:
+        parser.error('--music-site-media requires --music-site')
+    if args.no_refresh_music_inputs and not args.music_map_only:
+        parser.error('--no-refresh-music-inputs requires --music-map-only')
+    if (args.scene_music_only or args.music_map_only) and any(value is not None for value in (
+        args.runtime_trace_bundle, args.native_entry_session,
+        args.native_entry_package_index, args.native_entry_decode_witness)):
+        parser.error('music-map/scene-music refresh does not refresh runtime captures or native-entry sessions')
     if args.package_catalog_only != (args.package_input_set_sha256 is not None):
         parser.error('--package-catalog-only requires --package-input-set-sha256, used only with this mode')
     if args.package_catalog_only and any(value is not None for value in (
@@ -4779,7 +4803,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         or args.audio_dumper != DEFAULT_AUDIO_DUMPER
     ):
         parser.error("focused Audio refresh cannot be combined with decode or HIRC refresh options")
-    if args.game_root is None and not focused:
+    if args.game_root is None and (not focused or args.music_map_only):
         args.game_root = DEFAULT_GAME_ROOT
     if args.game_root is not None:
         if args.streaming_assets is None:
@@ -4801,7 +4825,32 @@ if __name__ == "__main__":
         print(json.dumps({'status': _catalog['status'], **_catalog.get('summary', {}),
                           **({'diagnostic': _catalog['diagnostic']} if 'diagnostic' in _catalog else {})}))
         raise SystemExit(0 if _catalog['status'] == 'validated' else 2)
+    if _args.music_bindings_only:
+        from scripts.webui.audio.music_site import refresh_music_bindings
+        try:
+            refresh_music_bindings(_args)
+        except (OSError, ValueError) as _error:
+            raise SystemExit(f"Music binding refresh failed: {_error}") from _error
+        raise SystemExit(0)
     if not (_args.native_entry_only or _args.runtime_source_only):require_export_layout(_args.export_root)
+    if _args.scene_music_only or _args.music_map_only:
+        from scripts.webui.audio.semantics.scene_music import refresh_scene_music
+        _index_path = _args.audio_root.resolve() / _args.language / "index.json"
+        _index = load_json_strict(_index_path, {})
+        if not isinstance(_index, dict) or not _index:
+            raise SystemExit(f"Audio index not found or invalid: {_index_path}")
+        if _args.music_map_only:
+            from scripts.webui.audio.music_site import build_music_map
+            try:
+                build_music_map(_args, _index)
+            except (OSError, ValueError, subprocess.CalledProcessError) as _error:
+                raise SystemExit(f"Music map build failed: {_error}") from _error
+            raise SystemExit(0)
+        refresh_scene_music(audio_index=_index, export_root=_args.export_root.resolve(),
+                            webui_root=_args.webui_root.resolve(), language=_args.language,
+                            metadata=_args.metadata or (_args.game_root / "il2cpp_data/Metadata/global-metadata.dat" if _args.game_root else None),
+                            gameassembly=(_args.game_root.parent / "GameAssembly.dll" if _args.game_root else None))
+        raise SystemExit(0)
     raise SystemExit(
         build_runtime_source_only(_args) if _args.runtime_source_only else
         build_native_entry_only(_args) if _args.native_entry_only else

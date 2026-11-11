@@ -1,0 +1,27 @@
+.mr-music { margin: .75rem 0; border-top: 1px solid var(--border); padding-top: .75rem; }
+.mr-music > summary { cursor: pointer; font-weight: 650; }
+.mr-music-content { padding: .65rem 0; }
+.mr-music-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .65rem; }
+.mr-music-tools input { flex: 1 1 12rem; min-width: 0; }
+.mr-music-tools select { max-width: 100%; }
+.mr-music-card { padding: .75rem 0; border-top: 1px solid var(--border); }
+.mr-music-card header { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: baseline; }
+.mr-music-card header span { opacity: .7; font-size: .85rem; }
+.mr-music-card a { overflow-wrap: anywhere; }
+.mr-music-card label { display: block; font-size: .85rem; }
+.mr-music-card label select { display: block; margin: .35rem 0; max-width: 100%; width: 100%; }
+.mr-music-card audio { display: block; width: min(100%, 35rem); height: 36px; margin: .4rem 0; }
+.mr-music-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; max-height: 12rem; overflow: auto; }
+.mr-music-card details > summary { cursor: pointer; font-size: .85rem; }
+.mr-music-timings { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .25rem .75rem; padding-left: 1.25rem; }
+.mr-music-timings li { overflow-wrap: anywhere; }
+/* Authored music-trigger geometry shares the Map's world projection. */
+.mr-music-zone { cursor: pointer; outline: none; }
+.mr-music-zone polygon { fill: #7c83fd; fill-opacity: .055; stroke: #9b86ff; stroke-width: 1.4; stroke-dasharray: 5 3; vector-effect: non-scaling-stroke; }
+.mr-music-zone:hover polygon, .mr-music-zone:focus polygon { fill-opacity: .18; stroke-width: 2; }
+.mr-music-zone.is-selected polygon { fill: #bd8cff; fill-opacity: .22; stroke: #d4b6ff; stroke-width: 2; stroke-dasharray: none; }
+/* A candidate list preserves the same single-player and route-evidence owner. */
+.mr-music-playlist ol { padding-left: 1.6rem; }
+.mr-music-playlist li { margin: .25rem 0; }
+.mr-music-playlist button { display: flex; justify-content: space-between; gap: 1rem; width: 100%; text-align: left; padding: .55rem .7rem; border: 1px solid #d9d5e7; border-radius: .4rem; background: #fff; color: #39334e; cursor: pointer; }
+.mr-music-playlist button[aria-pressed="true"] { background: #f0eafa; border-color: #9172b9; }

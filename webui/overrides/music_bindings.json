@@ -1,0 +1,19 @@
+{
+  "schema": "endfield.music-bindings.v1",
+  "provenance": "User-provided file/name and album-order correspondence; provider IDs remain unassigned. Event associations are catalog labels, not individual media identities.",
+  "tracks": [
+    {"id":"danqingdu-01","album":"丹青渡 OST","trackNumbers":[1],"title":"题云上快哉风","aliases":["scroll_p7"],"sourceNames":["scroll_p7"],"eventNames":["au_music_map02_lv010_exploring_scroll_p7","au_music_map02_lv010_exploring_scroll_p7_view"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-02","album":"丹青渡 OST","trackNumbers":[2],"title":"浮舟","aliases":["entry","entry_02"],"sourceNames":["entry","entry_02"],"eventNames":["au_music_map02_lv010_exploring_entry"],"mediaIds":[],"providers":[],"note":"无人声／有人声变体；目前未指定单个媒体 ID。"},
+    {"id":"danqingdu-03","album":"丹青渡 OST","trackNumbers":[3],"title":"世有秋暝","aliases":["世有秋暝"],"sourceNames":["世有秋暝"],"eventNames":[],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-04","album":"丹青渡 OST","trackNumbers":[4],"title":"问津","aliases":["opening_4_ending","scroll_p1"],"sourceNames":["opening_4_ending","scroll_p1"],"eventNames":["au_music_map02_lv010_exploring_opening_4_ending","au_music_map02_lv010_exploring_scroll_p1"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-05","album":"丹青渡 OST","trackNumbers":[5],"title":"缘缘","aliases":["inn"],"sourceNames":["inn"],"eventNames":["au_music_map02_lv010_exploring_inn"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-06","album":"丹青渡 OST","trackNumbers":[6],"title":"凡心向喜","aliases":["inn_04"],"sourceNames":["inn_04"],"eventNames":[],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-07","album":"丹青渡 OST","trackNumbers":[7],"title":"此间田园乐事长","aliases":["farm"],"sourceNames":["farm"],"eventNames":["au_music_map02_lv010_exploring_farm"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-08","album":"丹青渡 OST","trackNumbers":[8],"title":"昼见明河","aliases":["昼见明河"],"sourceNames":["昼见明河"],"eventNames":[],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-09","album":"丹青渡 OST","trackNumbers":[9],"title":"心照百千秋","aliases":["scroll_p6"],"sourceNames":["scroll_p6"],"eventNames":["au_music_map02_lv010_exploring_scroll_p6","au_music_map02_lv010_exploring_scroll_p6_view"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-10","album":"丹青渡 OST","trackNumbers":[10],"title":"缘溪行","aliases":["scroll_p8"],"sourceNames":["scroll_p8"],"eventNames":["au_music_map02_lv010_exploring_scroll_p8"],"mediaIds":[],"providers":[]},
+    {"id":"danqingdu-19","album":"丹青渡 OST","trackNumbers":[19],"title":"去渡！","aliases":["state01"],"sourceNames":["state01"],"eventNames":[],"mediaIds":[],"providers":[],"note":"祀一阶段。"},
+    {"id":"danqingdu-20-23","album":"丹青渡 OST","trackNumbers":[20,21,22,23],"title":"何处山海万象生","aliases":["state02"],"sourceNames":["state02"],"eventNames":[],"mediaIds":[],"providers":[],"note":"祀二阶段，对应多个专辑曲目；需按具体版本分别补充媒体绑定。"},
+    {"id":"danqingdu-25","album":"丹青渡 OST","trackNumbers":[25],"title":"明眸","aliases":["au_music_map02_lv010"],"sourceNames":["au_music_map02_lv010"],"eventNames":["au_music_map02_lv010"],"mediaIds":[],"providers":[]}
+  ]
+}

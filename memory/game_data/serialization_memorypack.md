@@ -14,6 +14,62 @@ its module docstring, with per-build facts in `scripts/game_data/contracts/`.
 Derived-plan EOF closure never substitutes for an independently named
 whole-file schema.
 
+## Pooled strings in current LevelScript music graphs
+
+`string_pool.py` owns the bounded USPC block reader and its standard LZ4
+compression (not the inverted world-stream codec). `pooled_levelscript.py`
+reads a separate selected profile; it does not widen the legacy inline-string
+or root-member-count gates. `pooled_levelscript_native.py` admits the explicit
+native pair and recorded reader windows in
+[`pooled_levelscript_music_native.json`](../../scripts/game_data/contracts/pooled_levelscript_music_native.json).
+Generated setter order and declared member names remain the **direct** tier;
+whole-record EOF does not promote them to an exact native schema.
+
+When the pool branch of `BeyondReadString` is selected, one signed Int32 is a
+string index, with `-2` for null and `-1` for empty. It is not an inline byte
+length. Global indices address the selected pool's block and local string;
+the block reader checks the offset directory, UTF-8, counts and physical EOF.
+Searching raw LevelScript bytes for an Event name, ASCII UID or Cue hash can
+therefore miss a stored reference. Such a negative search proves no absence.
+
+`pooled_levelscript_corpus.py` authenticates pool blocks, level-owned scripts
+and UI map-label configurations against a current Persistent-primary JsonData
+VFS audit by path, length and logical MD5. It checks the audit's input-set,
+catalog/build fingerprints and publication digest before reading. Unsupported
+wrappers, tags, unknown indices or any cursor short of EOF withhold that
+entire record. A current subset is not a whole-family completion claim.
+
+The selected profile can include additional generated wrapper declarations
+and native dispatch cases reached by fully closed records across the corpus;
+it is not limited to the first inn graph. Each union case retains its selected
+native dispatcher/type-usage evidence. Expanded declaration coverage does not
+promote setter order to formatter-body proof, admit unmanaged dictionary
+padding, or turn unknown actions into executable music edges. Per-level
+decoded/unsupported/music coverage and bounded failure categories are generated
+by the corpus gate so future work can distinguish a missing reader from an
+absent music request.
+
+The admitted music lane rejoins an entering/leaving header's constant trigger
+slot to its own script's volume, then follows supported action edges to a
+constant `PostMusicEvent`. SetBool assignments, WaitForSeconds and conditional
+branches remain distinct stored facts. The selected overlap consumer builds
+half-size local box bounds and an inverse TRS from position and Euler rotation;
+the live leader probe is a sphere, so nominal stored box geometry is not a
+measured activation or audible boundary. Music selection still requires the
+Wwise State/track join; label-anchor containment does not prove a formal named
+place boundary. No game patch, injection or runtime hook is used in this lane.
+
+The overlap unit's radius getter reads the stored shape radius, and its sphere
+case constructs a local origin/radius before the sphere/sphere intersection
+consumer. Nominal sphere outlines therefore use that radius, not the unrelated
+size vector or an invented player expansion. Their XZ rendering samples a
+circle; label containment uses the analytic circle. Tilted boxes project the
+convex hull of all eight transformed corners using the selected unit-scale TRS
+and [Unity's documented Z/X/Y Euler order](https://docs.unity3d.com/ja/2022.1/ScriptReference/Quaternion.Euler.html).
+The consumer windows and radius/rotation declarations live in the same reviewed
+native contract. These projections remain nominal silhouettes, not a ground
+slice, player-expanded activation volume or measured audible boundary.
+
 ## The JsonData registry gate
 
 `python -m scripts.game_data.jsondata_corpus` joins each current JsonData

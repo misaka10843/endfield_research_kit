@@ -3895,6 +3895,9 @@ def resolve_animestudio_dummy_dlls(explicit: Path | None, game_root: Path) -> tu
     return None, None
 
 
+COMMAND_PROGRESS_INTERVAL_SECONDS = 15
+
+
 def run_logged_command(
     name: str,
     argv: list[str],
@@ -3902,6 +3905,12 @@ def run_logged_command(
     reports_dir: Path,
     stream_output: bool = False,
 ) -> CommandResult:
+    """Keep both logs live and report child progress while it is still running.
+
+    ``stream_output`` remains accepted by existing callers; both paths now
+    drain stdout/stderr concurrently instead of retaining a whole run in RAM.
+    Heartbeats describe activity and elapsed time, not an estimated percentage.
+    """
     ensure_dir(reports_dir)
     stdout_log = reports_dir / f"{name}.stdout.log"
     stderr_log = reports_dir / f"{name}.stderr.log"
@@ -3911,23 +3920,44 @@ def run_logged_command(
     log(f"  stderr log: {stderr_log}")
     log(f"  command: {' '.join(argv)}")
     started = time.time()
-    if stream_output:
-        with stdout_log.open("w", encoding="utf-8", errors="replace") as stdout_handle, stderr_log.open(
-            "w", encoding="utf-8", errors="replace"
-        ) as stderr_handle:
-            proc = subprocess.run(
-                argv,
-                cwd=str(cwd),
-                stdout=stdout_handle,
-                stderr=stderr_handle,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-    else:
-        proc = subprocess.run(argv, cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace")
-        stdout_log.write_text(proc.stdout, encoding="utf-8")
-        stderr_log.write_text(proc.stderr, encoding="utf-8")
+    latest = ["waiting for child output", ""]
+    with stdout_log.open("w", encoding="utf-8", errors="replace") as stdout_handle, stderr_log.open(
+        "w", encoding="utf-8", errors="replace"
+    ) as stderr_handle:
+        with subprocess.Popen(
+            argv, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
+        ) as proc:
+            def drain(pipe, handle, slot: int) -> None:
+                for line in pipe:
+                    handle.write(line)
+                    handle.flush()
+                    message = line.strip()
+                    if message:
+                        latest[slot] = message[-320:]
+                        if message.startswith("[progress]"):
+                            log(f"{name}: {message}")
+
+            with ThreadPoolExecutor(max_workers=2) as readers:
+                stdout_reader = readers.submit(drain, proc.stdout, stdout_handle, 0)
+                stderr_reader = readers.submit(drain, proc.stderr, stderr_handle, 1)
+                try:
+                    while True:
+                        try:
+                            proc.wait(timeout=COMMAND_PROGRESS_INTERVAL_SECONDS)
+                            break
+                        except subprocess.TimeoutExpired:
+                            for reader in (stdout_reader, stderr_reader):
+                                if reader.done():
+                                    reader.result()
+                            log(f"running {name}: pid={proc.pid}, elapsed={time.time() - started:.0f}s; "
+                                f"stdout: {latest[0]}; stderr: {latest[1] or 'none'}")
+                    stdout_reader.result()
+                    stderr_reader.result()
+                except BaseException:
+                    proc.kill()
+                    proc.wait()
+                    raise
     duration = time.time() - started
     log(
         f"finished {name} with returncode={proc.returncode} "
@@ -6822,6 +6852,15 @@ def main() -> int:
                 result = run_logged_command(vfs_index_command_name(source, block_name), cmd, ROOT, source_report_dir)
                 command_results.append(result)
                 command_results_by_name[result.name] = result
+
+                if result.returncode != 0:
+                    log(
+                        f"VFS index failed: layer={source} block={block_name} "
+                        f"returncode={result.returncode}; "
+                        f"stdout={result.stdout_log}; stderr={result.stderr_log}. "
+                        "Stopping before overlay construction; existing indexes are not reused."
+                    )
+                    return 1
 
         if vfs_index_enabled or any(path.exists() for path in current_vfs_index_paths):
             vfs_index_summary[source] = summarize_vfs_indexes(output_root, source, command_results_by_name)

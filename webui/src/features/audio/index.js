@@ -2542,6 +2542,7 @@
     body.replaceChildren();
     if (selected) {
       body.appendChild(recordPanel(selected));
+      void appendConditionalMusic(body, selected);
       title.insertAdjacentHTML("beforeend", window.WebUI.updateBadges.fileHtml(selected.raw));
       body.insertAdjacentHTML("afterbegin", window.WebUI.updateBadges.fileDetails(selected.raw));
       window.WebUI.updateBadges.decorateFiles(body);
@@ -2557,6 +2558,59 @@
   function indexSubtitle() {
     const parts = [state.index?.language || state.language, state.index?.generated].filter(Boolean);
     return parts.join(" · ");
+  }
+
+  const sceneMusicCatalogCache = new Map();
+  async function appendConditionalMusic(body, selected) {
+    const eventId = selected.raw?.id;
+    if (selected.kind !== "events" || (!String(eventId || "").startsWith("au_music_") && selected.raw?.category !== "music")) return;
+    const language = state.language;
+    const key = `${language}:${state.index?.generated || ""}`;
+    try {
+      let pending = sceneMusicCatalogCache.get(key);
+      if (!pending) {
+        pending = fetch(`data/lang/${encodeURIComponent(language)}/audio/scene_music.json`, { cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("sceneMusicUnavailable");
+            const catalog = await response.json();
+            if (catalog.schema !== "endfield.webui.scene-music.v1") throw new Error("sceneMusicSchema");
+            return new Map((catalog.events || []).map((event) => [event.id, event]));
+          });
+        sceneMusicCatalogCache.set(key, pending);
+      }
+      const row = (await pending).get(eventId);
+      if (state.selected !== selected || state.language !== language || !body.isConnected || !row?.conditionalMedia?.length) return;
+      const seenPaths = new Set();
+      const candidates = row.conditionalMedia.filter((item) => {
+        if (typeof item.src !== "string" || !item.src.trim()) return false;
+        try {
+          const url = new URL(item.src, location.href);
+          if (url.origin !== location.origin || !["http:", "https:"].includes(url.protocol) || seenPaths.has(url.href)) return false;
+          seenPaths.add(url.href); return true;
+        }
+        catch { return false; }
+      });
+      if (!candidates.length) return;
+      const section = document.createElement("details");
+      section.className = "audio-runtime-system";
+      const summary = document.createElement("summary");
+      summary.textContent = `${locale() === "zh" ? "条件音乐候选" : "Conditional music candidates"} (${candidates.length})`;
+      section.append(summary, noteSection(locale() === "zh" ? "静态路径" : "Static routes",
+        locale() === "zh" ? "复用 Wwise 状态决策树。假设此事件执行、主音乐引擎处于播放且其他选曲条件满足；不代表已观测播放、区域专属曲目或实际混音。原生供给器审计与本候选关联分别验证。"
+          : "Uses the Wwise State decision tree. Assumes this request executes, the music engine is playing and remaining predicates apply. This is not observed playback, region-exclusive music or a reconstructed mix. Native provider auditing is separate."));
+      renderPlayers(section, candidates.map((item) => ({ ...item, title: `${item.mediaId}.flac · ${item.sourceEventId}`,
+        format: "FLAC", rootActionIds: [], relationTypes: ["conditionalStateMusicLeaf"] })));
+      const proof = document.createElement("details");
+      const proofTitle = document.createElement("summary");
+      proofTitle.textContent = locale() === "zh" ? "路径审计与前 8 个候选证据" : "Route audit and first 8 candidate proofs";
+      const pre = document.createElement("pre");
+      pre.textContent = JSON.stringify({ audit: row.musicRouteAudit, candidates: candidates.slice(0, 8) }, null, 2);
+      proof.append(proofTitle, pre); section.append(proof);
+      body.prepend(section);
+    } catch {
+      // This optional Audio-owned sidecar does not block existing event/media.
+      sceneMusicCatalogCache.delete(key);
+    }
   }
 
   function runtimeExternalRequestsSection(projection) {

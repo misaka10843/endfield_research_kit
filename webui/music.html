@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Endfield · 地图与音乐</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="stylesheet" href="src/features/map_recovery/music.css?v=20261024-atlas-v3">
+  <link rel="stylesheet" href="src/features/music_map/style.css?v=20261024-atlas-v3">
+  <script defer src="src/features/music_map/bootstrap.js?v=20261024-atlas-v3"></script>
+  <script defer src="src/features/music_map/bindings.js?v=20261024-atlas-v3"></script>
+  <script defer src="src/features/music_map/player.js?v=20261024-atlas-v3"></script>
+  <script defer src="src/features/map_recovery/music.js?v=20261024-atlas-v3"></script>
+  <script defer src="src/features/music_map/index.js?v=20261024-atlas-v3"></script>
+</head>
+<body>
+  <header class="site-header"><a class="wordmark" href="music.html">ENDFIELD <span>地图与音乐</span></a><nav><a href="music-bindings.html">曲目映射工具 ↗</a><a href="./#map-recovery" data-main-app>完整 WebUI ↗</a></nav></header>
+  <main>
+    <section class="atlas" aria-label="音乐地图">
+      <div class="atlas-heading"><div><p class="eyebrow">SOUND ATLAS / 静态配置</p><h1>在地图上，找到音乐。</h1><p>点击紫色范围查看音乐请求与候选曲目。</p></div><span id="coverage" role="status">正在载入目录…</span></div>
+      <div class="world-tabs" role="group" aria-label="大地图区域"><button type="button" data-world="map01" aria-pressed="false">四号谷地</button><button type="button" data-world="map02" aria-pressed="false">武陵</button><button type="button" data-world="other" hidden aria-pressed="false">特殊场景</button></div>
+      <div class="atlas-tools"><label>区域 <select id="scene" aria-label="选择地图"></select></label><button id="zoom-in" type="button" aria-label="放大地图">＋</button><button id="zoom-out" type="button" aria-label="缩小地图">−</button><button id="fit" type="button">完整地图</button><button id="focus" type="button">聚焦音乐区域</button><label><input id="auto-play" type="checkbox" checked>点击范围试听</label><label class="special-toggle"><input id="show-special" type="checkbox">显示副本和特殊场景</label></div>
+      <div id="map" tabindex="0" aria-label="音乐触发范围地图，滚轮缩放，拖动平移"></div>
+      <p class="map-caption"><span>紫色虚线：配置中的音乐触发范围 · 滚轮缩放 / 拖动平移</span><span id="scene-name"></span></p>
+      <p class="boundary">候选曲目来自静态音乐决策路径。范围表示游戏配置中的触发体积；高度、脚本状态与其他选曲条件仍然适用，不代表实测可听边界。</p>
+    </section>
+    <aside id="music-panel" aria-label="音乐请求与播放列表"></aside>
+  </main>
+  <p id="error" role="alert" hidden></p>
+</body>
+</html>

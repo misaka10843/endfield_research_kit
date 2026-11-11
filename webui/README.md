@@ -40,6 +40,43 @@ precedence; `WEBUI_PREVIOUS_EXPORT_ROOT` remains the server-specific override.
 
 ## Pages and routing
 
+`music.html` is an independent map-and-music atlas, outside the tab shell.
+`src/features/music_map/` owns its map loading, XZ projection, zoom/pan and
+responsive layout; it shares `map_recovery/music.js` for zone selection,
+direction, request evidence and playback. It reads `scene_music.json` and the
+published Map index/payloads directly, with no Story, Gameplay or SQL API load.
+`?map=LEVEL&musicRegion=REGION_ID` restores a selection without autoplay.
+An explicit range click opens the candidate playlist and, when the checkbox is
+enabled, starts its first candidate. Clicking a track previews that file;
+only one player runs. Enter/Space selects a focused range. Zoom buttons support
+touchscreens as well as wheel zoom and pointer drag. Missing base maps leave a
+coordinate-only trigger view, and missing/rejected evidence is disclosed.
+The optional portable site rewrites preview URLs into its own media directory.
+The atlas defaults to the real Map01/Map02 world maps, grouped as Valley IV and
+Wuling. Dungeons/special scenes have an explicit opt-in. Localized map names
+come from Audio's published `mapNames`. Individual trigger shapes paint in
+descending projected area, so small ranges stay clickable even when one region
+owns several differently sized shapes. Selection changes color without raising
+a large range above smaller ones.
+
+`music_map/player.js` enhances the shared audio element with track navigation,
+progress, volume and repeat; playlist and player selection stay synchronized.
+Raw trigger/control evidence is collapsed in the standalone layout. Curated
+song/album titles in `musicBindings` are separate from raw media identities:
+an event title does not label all of its media leaves as the same recording.
+NetEase frames are constructed only from numeric song IDs on the fixed provider
+host, loaded on explicit playback, and removed when another local/external
+preview starts. The platform link remains available if embedding is restricted.
+
+`music-bindings.html` and `music_map/editor.js` own a separate static editing
+surface. Drafts stay in browser storage; JSON import/export and single-track
+proposals do not write to the server. Reviewed JSON is published to the atlas.
+No editor draft or unreviewed imported mapping changes the map's catalog.
+External-only bundles retain trigger evidence and provider links, with explicit
+missing-preview states for unbound tracks.
+Authored trigger geometry, conditional music routes and actual audible coverage
+keep the same evidence boundaries as the main Map/Audio pages.
+
 Nine main tabs, in navigation order. `data-view` is the tab token in `index.html`
 and the value of `document.body.dataset.activeView`.
 
@@ -394,6 +431,7 @@ webui/data/lang/<LANG>/audio/{index,events,media}.json
 webui/data/lang/<LANG>/audio/media.NNN.json
 webui/data/lang/<LANG>/audio/{event_details,media_details}/**
 webui/data/lang/<LANG>/audio/scene_backgrounds.json
+webui/data/lang/<LANG>/audio/scene_music.json
 webui/data/lang/<LANG>/audio/conv/{index,<key>}.json
 webui/data/gameplay/projectiles.json
 webui/data/gameplay/skill_refs/{index.json,<record-hash>.json}
@@ -410,6 +448,32 @@ webui/data/recovery/index.json
 webui/data/story_order_ocr.json
 webui/data/mission_pipeline/index.json
 ```
+
+Map's Scene BGM panel reads Audio's optional `scene_music.json`. It filters by
+the selected map's exact scene IDs, all scenes, or unresolved scene ownership;
+users can search, export the filtered evidence and preview linked media
+candidates. Previewing a file does not reconstruct dynamic music selection or
+mixing. Cue conditions remain unevaluated. Stored fade/delay/sync parameters
+are shown separately from the unresolved audible silence duration, and no
+playback area is drawn without recovered geometry. Missing Audio publication
+leaves Map usable and offers a catalog refresh after Audio is built.
+Scene music's separate `conditionalMedia` candidates also appear in Audio
+Event details through the existing lazy player renderer. They assume the
+request executes and the named music engine is playing; remaining selector
+conditions are not evaluated. Native provider and runtime-capture disclosures
+remain independent. Files are deduplicated for preview while full route
+evidence stays in the catalog. Map filters scene IDs, not map-label positions.
+Named subregions require a separate proved trigger/State join; a label position
+and parent-scene membership cannot establish subregion music or playback area.
+The optional `regions` and `regionAudit` fields now carry admitted pooled
+LevelScript trigger volumes. Map draws their nominal XZ polygons, supports
+click/keyboard selection and entering/leaving filters, and previews only the
+selected region's stored request candidates. A catalog refresh redraws the
+overlay. `musicRegion` in the URL selects a published region ID. Place labels
+are attributed by anchor containment, while graph state keys distinguish
+overlapping triggers. Source geometry, vertical policy, graph paths and
+conditional branches remain inspectable. A script wait is displayed as a
+request delay and never as an observed silence duration.
 
 Builders may add compact sidecars, but each page must tolerate an absent
 optional sidecar and display an explicit degraded state when the omission

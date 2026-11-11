@@ -1449,6 +1449,18 @@ def _collect_audio_level_semantics(
     }
 
 
+def collect_audio_level_scene_catalog(export_root: Path, audio_index: dict[str, Any]) -> dict[str, Any]:
+    """Read exact table requests for a focused music refresh, without Unity scans."""
+    level = _collect_audio_level_semantics(export_root, _wwise_lookup(audio_index), _media_lookup(audio_index))
+    return {
+        "status": "exactAudioLevelTable" if level["status"] in {"exactTable", "exactMirroredTable"} else "unavailable",
+        "audioLevel": {key: value for key, value in level.items() if key != "eventContexts"},
+        "sources": [],
+        "scenes": [{"sceneId": row["sceneId"], "audioLevel": row, "definitions": []}
+                   for row in level.get("levels") or []],
+    }
+
+
 def _collect_mission_scene_refs(export_root: Path) -> dict[str, Any]:
     roots = [ExportLayout(export_root).game / "Json/MissionRuntimeAsset"]
     refs: dict[str, dict[str, Any]] = {}

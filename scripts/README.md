@@ -141,6 +141,16 @@ Behaviour `--help` does not give you:
   scope. Keep wrapper files CRLF. Timings and a process-tree
   benchmark go to `reports/export/`.
 
+Extraction keeps subprocess stdout/stderr logs live and prints a named
+elapsed-time heartbeat every 15 seconds. AnimeStudio's Unity export progress
+bar counts completed input containers, not total workflow completion; inputs
+can differ greatly in size. Audio decoding reports completed entries within
+the current PCK, with decoded, failed and skipped plugin-media counts.
+An Audio run first extracts both layers' animation
+clips and controller dependencies, then the Audio builder decodes the sound
+files. `--asset-jobs` bounds Unity extraction workers; Audio's decode worker
+count is separate. Existing runs keep the code loaded when they started.
+
 ### Exporter scope, provenance and stores
 
 `python -m scripts.game_data.extraction.export_full_from_game` exports exactly
@@ -406,6 +416,7 @@ exact SpaceshipMusicTable event contexts and decoded Audio media candidates.
 ```bat
 python -m scripts.webui.audio.build_audio
 python -m scripts.webui.audio.build_audio --skip-decode --refresh-hirc
+python -m scripts.webui.audio.build_audio --scene-music-only
 python -m scripts.webui.audio.build_audio --semantics-only --language CN --runtime-trace-bundle reports\story\recovery\audio_runtime_trace.json
 python -m scripts.webui.audio.semantics.hirc_action_corpus --expected-input-set-sha256 CURRENT_VFS_INPUT_SET_SHA256
 python -m scripts.webui.audio.semantics.hirc_named_reach --expected-input-set-sha256 CURRENT_VFS_INPUT_SET_SHA256
@@ -423,10 +434,111 @@ one per structural lane; what each framing establishes is in
 [`memory/game_data/audio_overview.md`](../memory/game_data/audio_overview.md).
 `play_sound_action_corpus` and `native_play_sound_string` are focused audits
 under `reports/audio/`, not page builds. Outputs:
-`webui/data/lang/<LANG>/audio/{index,events,media,scene_backgrounds}.json`,
+`webui/data/lang/<LANG>/audio/{index,events,media,scene_backgrounds,scene_music}.json`,
 `audio/conv/`, `gameplay/{sound_effects,projectile_audio}.json`, and native
 audits under `reports/story/recovery/audio/`; projectile behavior stays
 immutable in `webui/data/gameplay/projectiles.json`.
+The Gameplay sound sidecar's `boundedPlaySoundActionAudit` records skipped
+SkillData/BuffData action decoding when the native union gate or reviewed
+layout is unavailable; this optional evidence never blocks base Audio decode.
+`scene_music.json` reuses the collected scene, AudioLevel, AudioCue and Event
+evidence to classify scene BGM requests. Explicit scene keys own membership;
+unassigned music stays searchable. It includes possible decoded media, stored
+Cue conditions and bounded Wwise timing fields, without claiming a runtime
+mix, spatial playback extent or audible silence duration. Map reads this last
+Audio publication independently. Shared BGM does not require a CN voice pack;
+use `--language JP` only when Japanese voice publication is also wanted.
+`--scene-music-only` refreshes the AudioLevel and explicit AudioCue level
+subset and admitted pooled LevelScript music regions from the existing decoded
+index, without Unity scans or decoding. It
+replaces only `scene_music.json` and marks its narrower coverage; the normal
+Audio semantic build adds authenticated AudioMapData and enriched Event names.
+`semantics/scene_music_regions.py` owns region requests, supported graph paths,
+script waits and map-label containment. It consumes the independent
+`game_data/{string_pool,pooled_levelscript,pooled_levelscript_native,pooled_levelscript_corpus}.py`
+lane and the reviewed `contracts/pooled_levelscript_music_native.json` profile.
+The current authenticated JsonData audit defaults to
+`reports/audio/music_regions_vfs.json` and `music_regions_vfs_files.jsonl.gz`;
+missing or mismatched evidence withholds regions, without blocking scene music.
+Produce it with AnimeStudio `vfs-audit`, **Persistent primary, StreamingAssets
+fallback**, focused to JsonData's directory hash from `vfs-index`, using
+`--summary-json`, `--ledger-jsonl-gz` and `--report-md` to choose those paths.
+The family audit can also run independently:
+
+```bat
+python -m scripts.game_data.pooled_levelscript_corpus --export-root export_full --metadata META --gameassembly GA --expected-input-set-sha256 CURRENT_VFS_INPUT_SET_SHA256 --output reports/audio/pooled_music_corpus.json
+python -m scripts.webui.audio.build_audio --scene-music-only --game-root "PATH_TO_Endfield_Data"
+```
+
+For the repeatable music-map workflow use `music-map.bat`, or the same public
+Audio entry point with `--music-map-only`. It validates the selected native
+profile, checks export freshness, refreshes **only Table and JsonData** when
+stale, discovers JsonData's VFS directory and creates/reuses a current focused
+audit, then publishes every supported region. It does not scan Unity or decode
+audio. `--no-refresh-music-inputs` makes stale input a stopping condition.
+Missing native evidence or rejected region inputs preserve the prior music
+publication. Recovery coverage and unsupported-record categories are written
+to `reports/audio/music_map_build.json`; unsupported records are not evidence
+of absent music.
+
+```bat
+.\music-map.bat
+.\music-map.bat --music-site reports\music_site
+```
+
+Manual/community song metadata lives in `webui/overrides/music_bindings.json`.
+`semantics/music_bindings.py` validates it and publishes it as a separate
+`musicBindings` layer; it never changes trigger or Wwise evidence. Exact event
+associations label requests. Only an explicit media ID or stored source filename
+can identify an individual preview. Duplicate file bindings are rejected.
+Map names are localized from `LevelDescTable` using integer-safe I18n IDs.
+
+`music-bindings.html` is an independent static editor: local drafts, JSON merge,
+full-catalog export and single-track proposals. Publishing is a reviewed JSON
+change followed by the fast metadata-only refresh below. This needs neither a
+community backend nor a native rescan; a future submission service can produce
+the same proposals for review.
+
+```bat
+.\music-map.bat --music-bindings-only
+.\music-map.bat --music-bindings-only --music-site reports\music_site --music-site-media mapped
+.\music-map.bat --music-bindings-only --music-site reports\music_site_platform --music-site-media none
+```
+
+`--music-site-media all` includes every local preview; `mapped` omits only files
+with explicit per-media/source-name provider bindings; `none` includes no local
+audio. Unmapped files in that last mode have no preview, while curated provider
+records remain visible. Event-level associations alone cannot remove a local
+file. Re-export removes only obsolete media named by the generated site's prior
+catalog, preserving original exports and unrelated files. The current provider
+adapter accepts numeric NetEase song IDs and uses its external player plus a
+platform link; platform availability is independent of static-site publication.
+
+`audio/music_site.py` owns this orchestration and portable site publication.
+The optional directory contains its own HTML, shared music renderer, map
+payloads/images and all linked preview files, with rewritten relative URLs.
+Media use hard links when available and copies otherwise; copying the finished
+directory to another machine retains its files. Serve that directory with an
+ordinary static HTTP server after stopping the repository server, for example:
+
+```bat
+python -m http.server 8765 --directory reports/music_site
+```
+
+A double-clicked `file://` page cannot fetch the JSON catalogs. Site export
+does not start a second server or depend on the Decoded API, game installation,
+or full WebUI.
+
+This publishes authored music-trigger geometry and conditional candidates,
+not an audible attenuation radius or a measured silence gap. Script waits are
+reported separately from Wwise timing parameters. Native provider preparation
+and its older pinned build remain separate evidence lanes.
+`semantics/music_routes.py` joins typed SetState requests to existing v150
+MusicSwitch decision-tree leaves and same-bank typed track sources. It emits
+separate `conditionalMedia` and `musicRouteAudit` fields, preserving other
+selector predicates and withheld edges. These are not direct Event Play edges
+or native provider observations. Conflicting assignments, unsupported versions,
+unproved leaf ownership and known-State/default-key mismatches yield no route.
 
 Reusable evidence owners live under `webui/audio/semantics/`. Add logic to its
 owner rather than to either entry point, and add no compatibility re-exports,

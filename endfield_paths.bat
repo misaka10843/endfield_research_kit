@@ -4,7 +4,7 @@ rem Edit this file once instead of passing path overrides to every command.
 rem Command-line flags such as --game-root and --previous-export-root still win.
 
 rem Installed Endfield_Data directory.
-set "ENDFIELD_GAME_ROOT=D:\Program Files\Endfield Game\Endfield_Data"
+set "ENDFIELD_GAME_ROOT=E:\mihoyo\collapse\EndfieldCn\Arknights Endfield Game\Endfield_Data"
 
 rem Saved previous game-data export used by build_updates.bat.
 set "ENDFIELD_PREVIOUS_EXPORT_ROOT=export_full_1d5d1"

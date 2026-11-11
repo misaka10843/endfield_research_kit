@@ -367,6 +367,10 @@ def execute_export(args: argparse.Namespace, plan: BuildPlan, game_root: Path, e
     else:
         log("source: the current export")
     log(f"build tasks: {', '.join(task.name for task in plan.tasks)} (jobs {args.webui_jobs})")
+    if args.from_game and "audio" in plan.pages:
+        log("Audio order: first extract Unity dependencies (including AnimationClip and animator "
+            "controllers) from both installed layers; then build pages and decode audio to "
+            "game/Audio. Audio decoding has not started yet.")
 
     requirements = plan.requirements
     changed_manifest = ExportLayout(export_root).extraction_incremental_dir / "pending_manifest.json"
